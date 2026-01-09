@@ -5,6 +5,7 @@ use App\Http\Controllers\IdeaController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\RedirectController;
+use App\Http\Controllers\CookieConsentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,12 @@ Route::get('/', function () {
 
 // ------------- Protected routes (authentication required) -------------
 Route::middleware(['auth'])->group(function () {
+
+    // Cookie consent routes
+    Route::get('/cookie-consent', [CookieConsentController::class, 'show'])
+        ->name('cookie.consent');
+    Route::post('/cookie-consent', [CookieConsentController::class, 'store'])
+        ->name('cookie.consent.store');
 
     // Full CRUD for ideas
     Route::resource('ideas', IdeaController::class);
