@@ -8,17 +8,18 @@ use App\Models\User;
 class IdeaPolicy
 {
     /**
-     * Determine if the given user can update the idea.
+     * Seul l'auteur de l'idée peut la modifier.
      */
     public function update(User $user, Idea $idea): bool
     {
-        // TODO
-        return true; // Vulnerable on purpose
+        return $user->id === $idea->user_id;
     }
 
+    /**
+     * Seul l'auteur de l'idée ou un admin peut la supprimer.
+     */
     public function delete(User $user, Idea $idea): bool
     {
-        // TODO
-        return true;
+        return $user->id === $idea->user_id || $user->isAdmin();
     }
 }

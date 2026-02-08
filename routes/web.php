@@ -49,9 +49,11 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/ideas/{idea}/comments/{comment}', [CommentController::class, 'destroy'])
         ->name('comments.destroy');
 
-    // Logs page — currently no admin restriction (intentional)
-    Route::get('/logs', [LogController::class, 'index'])
-        ->name('logs.index');
+    // Logs — accès réservé aux administrateurs
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/logs', [LogController::class, 'index'])
+            ->name('logs.index');
+    });
 });
 
 // ------------- Intentional Open Redirect Vulnerability -------------

@@ -39,12 +39,12 @@ class CommentController extends Controller
 
     /**
      * Remove a comment.
-     *
-     * NOTE:
-     * - No authorization check ANY user can delete ANY comment (TODO)
+     * Seul l'auteur du commentaire ou un admin peut supprimer (via CommentPolicy).
      */
     public function destroy(Idea $idea, Comment $comment)
     {
+        $this->authorize('delete', $comment);
+
         $comment->delete();
 
         return redirect()
