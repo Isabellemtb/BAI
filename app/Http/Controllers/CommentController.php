@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Idea;
 use App\Models\Comment;
+use App\Services\Logging\ActionLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,8 +18,9 @@ use Illuminate\Support\Facades\Auth;
  */
 class CommentController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        private ActionLogService $logService
+    ) {
     }
 
     /**
@@ -26,11 +28,20 @@ class CommentController extends Controller
      */
     public function store(Request $request, Idea $idea)
     {
-        Comment::create([
+        $comment = Comment::create([
             'idea_id'     => $idea->id,
             'user_id'     => Auth::id(),
             'description' => $request->input('description'), // XSS vulnerable
         ]);
+
+        $this->logService->log(
+            userId: Auth::id(),
+            action: 'comment_created',
+            ideaId: $idea->id,
+            commentId: $comment->id,
+            dataAfter: json_encode($comment->toArray()),
+            request: $request,
+        );
 
         return redirect()
             ->route('ideas.show', $idea)
@@ -44,6 +55,15 @@ class CommentController extends Controller
     public function destroy(Idea $idea, Comment $comment)
     {
         $this->authorize('delete', $comment);
+
+        $this->logService->log(
+            userId: Auth::id(),
+            action: 'comment_deleted',
+            ideaId: $idea->id,
+            commentId: $comment->id,
+            dataBefore: json_encode($comment->toArray()),
+            request: request(),
+        );
 
         $comment->delete();
 

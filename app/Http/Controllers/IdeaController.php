@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Idea;
+use App\Services\Logging\ActionLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,9 +17,9 @@ use Illuminate\Support\Facades\Auth;
  */
 class IdeaController extends Controller
 {
-    public function __construct()
-    {
-
+    public function __construct(
+        private ActionLogService $logService
+    ) {
     }
 
     /**
@@ -58,6 +59,14 @@ class IdeaController extends Controller
             'application' => $request->input('application'),
         ]);
 
+        $this->logService->log(
+            userId: Auth::id(),
+            action: 'idea_created',
+            ideaId: $idea->id,
+            dataAfter: json_encode($idea->toArray()),
+            request: $request,
+        );
+
         return redirect()
             ->route('ideas.show', $idea)
             ->with('status', 'Idea created (vulnerable version).');
@@ -91,11 +100,22 @@ class IdeaController extends Controller
     {
         $this->authorize('update', $idea);
 
+        $dataBefore = json_encode($idea->toArray());
+
         $idea->update([
             'title'       => $request->input('title'),
             'description' => $request->input('description'),
             'application' => $request->input('application'),
         ]);
+
+        $this->logService->log(
+            userId: Auth::id(),
+            action: 'idea_updated',
+            ideaId: $idea->id,
+            dataBefore: $dataBefore,
+            dataAfter: json_encode($idea->toArray()),
+            request: $request,
+        );
 
         return redirect()
             ->route('ideas.show', $idea)
@@ -109,6 +129,14 @@ class IdeaController extends Controller
     public function destroy(Idea $idea)
     {
         $this->authorize('delete', $idea);
+
+        $this->logService->log(
+            userId: Auth::id(),
+            action: 'idea_deleted',
+            ideaId: $idea->id,
+            dataBefore: json_encode($idea->toArray()),
+            request: request(),
+        );
 
         $idea->delete();
 
