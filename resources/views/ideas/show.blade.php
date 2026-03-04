@@ -67,24 +67,57 @@
 
             @forelse($idea->comments as $comment)
 
-                <div class="border-b py-2">
+                <div class="border-b py-2" x-data="{ editing: false }">
 
                     <p class="text-sm text-gray-600">
                         {{ $comment->user?->name ?? 'Unknown' }}
                         • {{ $comment->created_at->diffForHumans() }}
                     </p>
 
-                    <div class="mt-1 text-sm">
-                        {!! nl2br(e($comment->description)) !!}
+                    {{-- Affichage normal --}}
+                    <div x-show="!editing">
+                        <div class="mt-1 text-sm">
+                            {!! nl2br(e($comment->description)) !!}
+                        </div>
+
+                        <div class="flex space-x-2 mt-1">
+                            @can('update', $comment)
+                                <button @click="editing = true" class="text-xs text-blue-600">
+                                    Edit
+                                </button>
+                            @endcan
+
+                            <form action="{{ route('comments.destroy', [$idea, $comment]) }}"
+                                  method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button class="text-xs text-red-600">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
-                    <form action="{{ route('comments.destroy', [$idea, $comment]) }}"
-                          method="POST">
+                    {{-- Formulaire d'édition --}}
+                    <form x-show="editing" x-cloak
+                          action="{{ route('comments.update', [$idea, $comment]) }}"
+                          method="POST" class="mt-2">
                         @csrf
-                        @method('DELETE')
-                        <button class="text-xs text-red-600 mt-1">
-                            Delete
-                        </button>
+                        @method('PUT')
+
+                        <textarea name="description" rows="3"
+                                  class="w-full border rounded p-2 text-sm">{{ $comment->description }}</textarea>
+
+                        <div class="flex space-x-2 mt-1">
+                            <button type="submit"
+                                    class="px-3 py-1 bg-blue-600 text-white text-xs rounded">
+                                Save
+                            </button>
+                            <button type="button" @click="editing = false"
+                                    class="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded">
+                                Cancel
+                            </button>
+                        </div>
                     </form>
 
                 </div>

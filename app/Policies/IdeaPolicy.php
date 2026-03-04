@@ -8,11 +8,11 @@ use App\Models\User;
 class IdeaPolicy
 {
     /**
-     * Seul l'auteur de l'idée peut la modifier.
+     * L'auteur de l'idée ou un admin peut la modifier.
      */
     public function update(User $user, Idea $idea): bool
     {
-        return $user->id === (int) $idea->user_id;
+        return $user->id === (int) $idea->user_id || $user->isAdmin();
     }
 
     /**

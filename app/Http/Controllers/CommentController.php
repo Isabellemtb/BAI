@@ -49,6 +49,34 @@ class CommentController extends Controller
     }
 
     /**
+     * Update a comment.
+     */
+    public function update(Request $request, Idea $idea, Comment $comment)
+    {
+        $this->authorize('update', $comment);
+
+        $dataBefore = json_encode($comment->toArray());
+
+        $comment->update([
+            'description' => $request->input('description'),
+        ]);
+
+        $this->logService->log(
+            userId: Auth::id(),
+            action: 'comment_updated',
+            ideaId: $idea->id,
+            commentId: $comment->id,
+            dataBefore: $dataBefore,
+            dataAfter: json_encode($comment->fresh()->toArray()),
+            request: $request,
+        );
+
+        return redirect()
+            ->route('ideas.show', $idea)
+            ->with('status', 'Comment updated.');
+    }
+
+    /**
      * Remove a comment.
      * Seul l'auteur du commentaire ou un admin peut supprimer (via CommentPolicy).
      */

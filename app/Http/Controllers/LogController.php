@@ -3,27 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActionLog;
+use Illuminate\Http\Request;
 
 /**
- * Minimal admin log view.
+ * Admin log viewer.
  *
- * SECURITY NOTE:
- * - No role verification login ANY authenticated user can access logs (TODO)
- *   Secure it by adding a real admin policy.
+ * Accès protégé par le middleware 'admin' (voir routes/web.php).
  */
 class LogController extends Controller
 {
-    public function __construct()
+    public function index(Request $request)
     {
-    }
+        $action   = $request->input('action');
+        $dateFrom = $request->input('date_from');
+        $dateTo   = $request->input('date_to');
 
-    public function index()
-    {
+        $actions = ActionLog::distinct()->orderBy('action')->pluck('action');
+
         $logs = ActionLog::with('user')
+            ->when($action, fn ($q) => $q->where('action', $action))
+            ->when($dateFrom, fn ($q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('created_at', '<=', $dateTo))
             ->latest()
-            ->limit(200)
-            ->get();
+            ->paginate(25)
+            ->withQueryString();
 
-        return view('logs.index', compact('logs'));
+        return view('logs.index', compact('logs', 'actions', 'action', 'dateFrom', 'dateTo'));
     }
 }
